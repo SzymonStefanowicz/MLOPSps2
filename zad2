@@ -86,7 +86,7 @@ sudo systemctl status llamafile
  Memory: 68.6M (peak: 69.1M)
 
 #4
-curl -X POST http://<TWOJE_IP>:8080/v1/chat/completions \
+curl -X POST http://192.168.X.X:8080/v1/chat/completions \
 -H "Content-Type: application/json" \
 -d '{
   "model": "gpt-3.5-turbo",
