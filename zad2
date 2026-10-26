@@ -1,0 +1,101 @@
+#Pobranie modelu
+#Tworzymy folder, pobieramy model i nadajemy mu uprawnienia do uruchamiania:
+sudo mkdir -p /opt/llamafile
+sudo curl -L -o /opt/llamafile/model.llamafile "https://huggingface.co/jartine/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/TinyLlama-1.1B-Chat-v1.0.Q4_K_M.llamafile"
+sudo chmod +x /opt/llamafile/model.llamafile
+
+#Konfiguracja konta i uprawnień
+#Tworzymy użytkownika i od razu katalog domowy, a następnie przypisujemy uprawnienia:
+sudo useradd --system --no-create-home --shell /bin/false llamafile
+sudo chown -R llamafile:llamafile /opt/llamafile
+sudo mkdir -p /home/llamafile
+sudo chown llamafile:llamafile /home/llamafile
+
+#Utworzenie pliku usługi systemd
+#Otwieramy edytor tekstu:
+sudo nano /etc/systemd/system/llamafile.service
+
+#Wklejamy do niego tę zawartość
+[Unit]
+Description=Llamafile HTTP REST API Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=llamafile
+Group=llamafile
+WorkingDirectory=/opt/llamafile
+ExecStart=/bin/sh /opt/llamafile/model.llamafile --server --nobrowser --host 192.168.X.X --port 8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+#Uruchomienie usługi
+#Przeładowujemy konfigurację i włączamy usługę na stałe:
+sudo systemctl daemon-reload
+sudo systemctl enable --now llamafile
+
+#Zbieranie wyników
+#Wywołujemy komendy potrzebne do skopiowania do dokumentacji
+sudo systemctl status llamafile
+sudo ss -tlnp | grep 8080
+ps aux | grep llamafile
+
+#Wysłanie zapytania z gospodarza
+#W osobnym oknie na Macu wysyłamy żądanie do API
+curl -X POST http://192.168.X.X:8080/v1/chat/completions \
+-H "Content-Type: application/json" \
+-d '{
+  "model": "gpt-3.5-turbo",
+  "messages": [{"role": "user", "content": "Napisz jedno zdanie."}],
+  "temperature": 0.3
+}'
+
+
+#Wyniki wywołań
+#1
+cat /etc/systemd/system/llamafile.service
+
+[Unit]
+Description=Llamafile HTTP REST API Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=llamafile
+Group=llamafile
+WorkingDirectory=/opt/llamafile
+# Uruchomienie modelu, bindowanie tylko do adresu dost\u0119pnego dla gospodarza
+ExecStart=/bin/sh /opt/llamafile/model.llamafile --server --nobrowser --host 192.168.64.3 --port 8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+#2
+sudo ss -tlnp | grep 8080
+
+LISTEN 0      5       192.168.X.X:8080      0.0.0.0:*    users:((".ape-1.10",pid=3771,fd=4))
+
+#3
+sudo systemctl status llamafile
+
+ Memory: 68.6M (peak: 69.1M)
+
+#4
+curl -X POST http://<TWOJE_IP>:8080/v1/chat/completions \
+-H "Content-Type: application/json" \
+-d '{
+  "model": "gpt-3.5-turbo",
+  "messages": [{"role": "user", "content": "Napisz jedno zdanie."}],
+  "temperature": 0.3
+}'
+
+{"choices":[{"finish_reason":"stop","index":0,"message":{"content":"Ta sondaż jest przeznaczona dla osób, które chcą zrozumieć, jak działa system pracy w Polsce.</s>","role":"assistant"}}],"created":1793041617,"id":"chatcmpl-MtpPJ2LrI2B8berfimhevwnF6bxtM14B","model":"gpt-3.5-turbo","object":"chat.completion","usage":{"completion_tokens":33,"prompt_tokens":29,"total_tokens":62}}%
+
+
+
+
