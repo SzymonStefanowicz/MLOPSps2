@@ -68,7 +68,7 @@ User=llamafile
 Group=llamafile
 WorkingDirectory=/opt/llamafile
 # Uruchomienie modelu, bindowanie tylko do adresu dost\u0119pnego dla gospodarza
-ExecStart=/bin/sh /opt/llamafile/model.llamafile --server --nobrowser --host 192.168.64.3 --port 8080
+ExecStart=/bin/sh /opt/llamafile/model.llamafile --server --nobrowser --host 192.168.X.X --port 8080
 Restart=on-failure
 RestartSec=5
 
